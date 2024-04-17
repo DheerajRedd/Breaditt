@@ -9,17 +9,18 @@ import { useToast } from "../hooks/use-toast";
 import { useCustomToasts } from "../hooks/use-custom-toast";
 
 interface SubscribeLeaveToggleProps {
-  isSubscribed: boolean;
   subredditId: string;
   subredditName: string;
+  isSubscribed: boolean;
 }
 
 const SubscribeLeaveToggle = ({
-  isSubscribed,
   subredditId,
   subredditName,
+  isSubscribed,
 }: SubscribeLeaveToggleProps) => {
   const { toast } = useToast();
+
   const { loginToast } = useCustomToasts();
   const router = useRouter();
 
@@ -58,7 +59,7 @@ const SubscribeLeaveToggle = ({
     },
   });
 
-  const { mutate: unsubscribe, isLoading: isUnsubLoading } = useMutation({
+  const { mutate: unsubscribe, isLoading: isUnSubLoading } = useMutation({
     mutationFn: async () => {
       const payload: SubscribeToSubredditPayload = {
         subredditId,
@@ -67,10 +68,16 @@ const SubscribeLeaveToggle = ({
       const { data } = await axios.post("/api/subreddit/unsubscribe", payload);
       return data as string;
     },
-    onError: (err: AxiosError) => {
-      toast({
-        title: "Error",
-        description: err.response?.data as string,
+    onError: (err) => {
+      if (err instanceof AxiosError) {
+        if (err.response?.status === 401) {
+          return loginToast();
+        }
+      }
+
+      return toast({
+        title: "There was a problem.",
+        description: "Something went wrong. Please try again.",
         variant: "destructive",
       });
     },
@@ -81,8 +88,8 @@ const SubscribeLeaveToggle = ({
         router.refresh();
       });
       toast({
-        title: "Unsubscribed!",
-        description: `You are now unsubscribed from/${subredditName}`,
+        title: "UnSubscribed!",
+        description: `You are now unsubscribed from r/${subredditName}`,
       });
     },
   });
@@ -90,7 +97,7 @@ const SubscribeLeaveToggle = ({
   return isSubscribed ? (
     <Button
       className="w-full mt-1 mb-4"
-      isLoading={isUnsubLoading}
+      isLoading={isUnSubLoading}
       onClick={() => unsubscribe()}
     >
       Leave community
